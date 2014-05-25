@@ -25,6 +25,86 @@ def creaTerreno():
 
 bozzolo = creaTerreno()
 
+PIATTAFORM = CUBOID([48.1,31,3])
+PIATTACOLOR = COLOR([0.5019,0.5019,0.5019])(PIATTAFORM)
+PIATTAT = T([1,2,3])([-22,-6.3,7.3])(PIATTACOLOR)
+
+GRID = COMP([INSR(PROD),AA(QUOTE)])
+finestraCAMRS = MATERIAL([1,1,1,0.1,  0,0,0.8,0.5,  1,1,1,0.1, 0,0,0,0.1, 100])(GRID([[2],[1],[4]]))
+finestraCAMCUC = MATERIAL([1,1,1,0.1,  0,0,0.8,0.5,  1,1,1,0.1, 0,0,0,0.1, 100])(GRID([[3],[1],[3]]))
+finestraCAMMP = MATERIAL([1,1,1,0.1,  0,0,0.8,0.5,  1,1,1,0.1, 0,0,0,0.1, 100])(GRID([[1],[2],[2]]))
+finestraCAMCSS2 = MATERIAL([1,1,1,0.1,  0,0,0.8,0.5,  1,1,1,0.1, 0,0,0,0.1, 100])(GRID([[1],[1.46],[2]]))
+finestraCAMSAL = MATERIAL([1,1,1,0.1,  0,0,0.8,0.5,  1,1,1,0.1, 0,0,0,0.1, 100])(GRID([[3],[1],[4]]))
+finestraCAMRST = T([1,3])([14,1])(finestraCAMRS)
+finestraCAMSALT = T([1,2,3])([15,30,1])(finestraCAMSAL)
+finestraCAMCUCT = T([1,2,3])([5,30,3])(finestraCAMCUC)
+finestraCAMMPT = T([1,2,3])([0,2,3])(finestraCAMMP)
+finestraCAMCSS2T = T([1,2,3])([0,18.27,3])(finestraCAMCSS2)
+finestraCAMCSS1 = T(2)(11)(finestraCAMMPT)
+
+
+finestre = STRUCT([finestraCAMRST,finestraCAMSALT,finestraCAMCUCT,finestraCAMMPT,finestraCAMCSS1,finestraCAMCSS2T])
+
+
+
+
+PortaBase = CUBOID([3.1,1,5])
+portaDiff = CUBOID([1,0.35,2])
+portaDiffT = T([1,3])([0.3,0.4])(portaDiff)
+portaDiffTT = T(2)(0.65)(portaDiffT)
+portaDiff2 = portaDiffT
+portaDiff2T = T(1)(1.4)(portaDiff2)
+portaDiff2TT = T(2)(0.65)(portaDiff2T)
+portaDiff3 = portaDiffT
+portaDiff3T = T(3)(2.4)(portaDiff3)
+portaDiff3TT = T(2)(0.65)(portaDiff3T)
+portaDiff4 = portaDiff3T
+portaDiff4T = T(1)(1.4)(portaDiff4)
+portaDiff4TT = T(2)(0.65)(portaDiff4T)
+Porta1Blocco = DIFFERENCE([PortaBase,portaDiffT,portaDiffTT,portaDiff2T,portaDiff2TT,portaDiff3T,portaDiff3TT,portaDiff4T,portaDiff4TT])
+PortaColorata = COLOR([0.3960,0.2627,0.1294])(Porta1Blocco)
+PortaColorataFuori = COLOR([0.5019,0.5019,0.5019])(Porta1Blocco)
+
+sfera = COLOR([1,0.843,0])(SPHERE(0.09)([8,8]))
+pomello1 = T([1,2,3])([2.8,0,2.62])(sfera)
+pomello2 = T(2)(1)(pomello1)
+PortaConPomello = STRUCT([PortaColorata,pomello1,pomello2])
+PortoneDiFuori = STRUCT([PortaColorataFuori,pomello1,pomello2])
+Portoneee = (ROTATE)([1,2])(PI/2)(PortaConPomello)
+
+portaBaseRs = CUBOID([2,1,5])
+portaNormaleDiff = CUBOID([1,0.25,4])
+portaNormaleDiffT1 = T([1,3])([0.5,0.7])(portaNormaleDiff)
+portaNormaleDiff2 = T([1,3])([0.5,0.7])(portaNormaleDiff)
+portaNormaleDiff2T = T(2)(0.75)(portaNormaleDiff2)
+portaNormale = DIFFERENCE([portaBaseRs,portaNormaleDiffT1,portaNormaleDiff2T])
+PortaNormaleColorata = COLOR([0.3960,0.2627,0.1294])(portaNormale)
+pomelloNormale1 = T([1,2,3])([0.3,0,2.62])(sfera)
+pomelloNormale2 = T(2)(1)(pomelloNormale1)
+portaPom12 = STRUCT([PortaNormaleColorata,pomelloNormale1,pomelloNormale2])
+portaNormaleCAMRS = T([1,2])([14,11])(portaPom12)
+portaNormaleConPomelloCAMRS = STRUCT([portaNormaleCAMRS])
+
+portaNormaleConPomelloCAMPM = T(1)(-5)(portaNormaleConPomelloCAMRS)
+portaNormaleCAMPM = S([1,2,3])([1.2,1,1])(portaNormaleConPomelloCAMPM)
+portaNormaleCAMPMT = T(1)(-2)(portaNormaleCAMPM)
+
+portaCSS1R = (ROTATE)([1,2])(PI/2)(portaNormaleConPomelloCAMRS)
+portaCSS1S = S([1,2,3])([0.9,1,1])
+portaCSS1T = T([1,2])([19,-1])(portaCSS1R)
+
+portaSAL = S([1,2,3])([1,0.9,1])(portaCSS1T)
+portaSALT = T([1,2])([5,6.6])(portaSAL)
+
+portaCSS2 = S([1,2,3])([1,0.9,1])(portaSALT)
+portaCSS2T = T([1,2])([-5,1.8])(portaCSS2)
+
+portaCUC = S([1,2,3])([1.1,1,1])(portaNormaleCAMPMT)
+portaCUCT = T([1,2])([-1.2,9])(portaCUC)
+
+PortoneT = T([1,2,3])([19,12.4,0])(Portoneee)
+
+porteTutte = STRUCT([PortoneT,portaNormaleConPomelloCAMRS,portaNormaleCAMPMT,portaCSS1T,portaSALT,portaCSS2T,portaCUCT])
 
 Base = CUBOID([5,17,0.1])
 Scalino = CUBOID([5,12,0.4])
@@ -316,7 +396,7 @@ CasaConMuri = STRUCT([muriMP,muriMSTras,muriCSS1Tras,muriCSS2Tras,muriCUCTras,mu
 #VIEW(CasaConMuri)
 
 CasaConPorteFinestre = STRUCT([stanzaMPconPortaFinestra,stanzaRSconPortaFinestraT,stanzaCSS1conPortaFinestraT,stanzaCSS2conPortaFinestraT,stanzaCUCconPortaFinestraT,stanzaSALconPortaFinestraT,
-	stanzaMuroEntrataconPortaT,pavimento])
+	stanzaMuroEntrataconPortaT,pavimento,porteTutte,finestre])
 #VIEW(CasaConPorteFinestre)
 
 CasaRibalta = S(1)(-1)(CasaConPorteFinestre)
@@ -400,7 +480,9 @@ Palazzo = STRUCT([Piano,Piano1,Piano2,Piano3,sottoScala,Terrazza,parete1,tenda,i
 VIEW(Palazzo)
 
 PalazzoTraslato = T([1,2,3])([-22,-6.3,10.4])(Palazzo)
-PalazzoSuCollina = STRUCT([bozzolo,PalazzoTraslato])
+PortaColorataFuoriT = T([1,2,3])([1.5,-6.8,13])(PortoneDiFuori)
+Cancello = S([1,2,3])([1,1,0.8])(PortaColorataFuoriT)
+PalazzoSuCollina = STRUCT([bozzolo,PalazzoTraslato,PIATTAT,Cancello])
 VIEW(PalazzoSuCollina)
 
 
