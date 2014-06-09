@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html>
+ <head> 
+  <title>Appendix A - Joint</title> 
+  <style>
+    body {
+      margin: 0;
+      overflow: hidden;
+    }
+
+    #stats {  /* Align stats top-left */
+      position: absolute;
+      left: 0px;
+      top: 0px;
+    }
+  </style> 
+  </head> 
+  <body>
+    <!-- JavaScript libraries -->
+    <script src="http://cdnjs.cloudflare.com/ajax/libs/three.js/r67/three.min.js"></script> 
+    <script src="http://cdnjs.cloudflare.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+    <script src="http://cdnjs.cloudflare.com/ajax/libs/stats.js/r11/Stats.min.js"></script>
+    <script src="http://cdnjs.cloudflare.com/ajax/libs/dat-gui/0.5/dat.gui.min.js"></script>
+    <script src="assets/libs/TrackballControls.js"></script>
+	<script src="font/3dumb_regular.typeface.js"></script>
+    <script>
+      // once everything is loaded, we run our Three.js stuff.
+      $(function () {
+        var stats = initStats();
+       
+        var scene = new THREE.Scene();
+        var camera = new THREE.PerspectiveCamera(45, window.innerWidth/window.innerHeight, 0.1, 1000);
+        var renderer = new THREE.WebGLRenderer();
+		
+		
+		
+	    // create trackballControls
+	    var trackballControls = new THREE.TrackballControls(camera);
+		
+        renderer.setClearColor(new THREE.Color(0xEEEEEE,1.0));
+        renderer.setSize(window.innerWidth,window.innerHeight);
+        renderer.shadowMapEnabled = true;
+
+        // position and point the camera to the center of the scene
+        camera.position.set(-30, 100, 60);
+        camera.up = new THREE.Vector3(0,1,0);
+        camera.lookAt(scene.position);
+
+          // add subtle ambient lighting
+        var ambiColor = "#0c0c0c";
+        var ambientLight = new THREE.AmbientLight(ambiColor);
+        scene.add(ambientLight);
+
+        var lightColor = "#ffffff";
+        var directionalLight = new THREE.SpotLight(lightColor);
+        directionalLight.position.set(0, 200, 0);
+		directionalLight.castShadow = true;
+        directionalLight.intensity = 1;
+		directionalLight.shadowDarkness = 0.5;
+        scene.add(directionalLight);
+
+        var axisHelper = new THREE.AxisHelper(3);
+        scene.add(axisHelper);
+
+        function mkJoint (radius, height) {
+          var joint = new THREE.Object3D();
+          var sphereGeometry = new THREE.SphereGeometry(radius, 8, 8);
+          var sphereMaterial = new THREE.MeshLambertMaterial({color: 0xA0522D, shading: THREE.FlatShading});
+          var sphere = new THREE.Mesh(sphereGeometry, sphereMaterial);
+		  sphere.castShadow = true;
+          sphere.position.set(0, 0, 0);
+          joint.add(sphere);
+
+          var cylinderGeometry = new THREE.CylinderGeometry(radius, radius, height, 50, 50, false);
+          var cylinderMaterial = new THREE.MeshLambertMaterial({color: 0xD2B48C, shading: THREE.FlatShading});
+          var cylinder = new THREE.Mesh(cylinderGeometry, cylinderMaterial);
+		  cylinder.castShadow = true;
+          cylinder.position.set(0, height / 2 + radius, 0);
+          sphere.add(cylinder);
+
+          var hook = new THREE.Object3D();
+          hook.position.set(0, height/2+radius, 0);
+          cylinder.add(hook);
+
+          joint.sphere = sphere;
+          joint.cylinder = cylinder;
+          joint.hook = hook;
+
+          return joint;
+        }
+
+		
+		// valori per la lunghezza e spessore dei cilindri = braccia della lampada
+        var height = 13 ;
+        var radius = 1;
+        var joint1 = mkJoint(radius, height);
+        
+		
+		var pianoGeometry = new THREE.PlaneGeometry(300,300,50,50);
+		var pianoMaterial = new THREE.MeshLambertMaterial({color: 0x571B24, side: THREE.DoubleSide});
+		var piano = new THREE.Mesh(pianoGeometry,pianoMaterial);
+		piano.receiveShadow = true;
+		piano.rotation.x = Math.PI/2;
+		
+		var torusGeometry = new THREE.TorusGeometry(5,3,20,20);
+        var torusMaterial = new THREE.MeshPhongMaterial( { color: 0x687F58});
+        var torus = new THREE.Mesh(torusGeometry,torusMaterial);
+		torus.castShadow = false;
+		torus.rotation.x = Math.PI/2;
+        torus.position.set(-90,0,-90);
+
+		
+		var textMaterial = new THREE.MeshPhongMaterial({color: 0x7D7A78});
+		var textGeom = new THREE.TextGeometry( '429200', {font:'3dumb', size: 20, height: 3});
+		var textMesh = new THREE.Mesh( textGeom, textMaterial );
+		textMesh.castShadow = true;
+		textMesh.position.set(-90,1,90);
+		scene.add( textMesh );
+        
+		
+		var cubo = new THREE.Mesh(new THREE.BoxGeometry(20,20,20),
+								new THREE.MeshLambertMaterial({color: 0x8b84f4}));
+		cubo.castShadow = false;
+		cubo.position.set(80,10,60);
+		scene.add(cubo);
+		scene.add(torus);
+		scene.add(piano);
+
+
+		var heightBase = 1;
+		var radiusBase = 7;
+		var cylinderBaseGeometry = new THREE.CylinderGeometry(radiusBase,radiusBase, heightBase, 45, 45, false);
+        var cylinderBaseMaterial = new THREE.MeshLambertMaterial({color: 0x8B4513});
+        var cylinderBase = new THREE.Mesh(cylinderBaseGeometry, cylinderBaseMaterial);
+		cylinderBase.position.set(0, 0, 0);
+		cylinderBase.receiveShadow = true;
+		joint1.position.set(0,heightBase / 2 + radius,0);
+		cylinderBase.add(joint1);
+		scene.add(cylinderBase);
+		
+        var joint2 = mkJoint(radius, height);
+        joint1.hook.add(joint2);
+		
+		var sphereParaLumeGeometry = new THREE.SphereGeometry(1, 8, 8);
+        var sphereParaLumeMaterial = new THREE.MeshLambertMaterial({color: 0xA0522D, shading: THREE.FlatShading});
+        var sphereParaLume = new THREE.Mesh(sphereParaLumeGeometry, sphereParaLumeMaterial);
+		sphereParaLume.castShadow = true;
+		
+		var sphereLampadinaGeometry = new THREE.SphereGeometry(2, 36, 36);
+        var sphereLampadinaMaterial = new THREE.MeshLambertMaterial({color: 0xFFFFFF, transparent: true, opacity:0.3});
+        var Lampadina = new THREE.Mesh(sphereLampadinaGeometry, sphereLampadinaMaterial);
+		
+		var pointLight = new THREE.PointLight(0xffffff,10,3);
+		pointLight.position.set(0,4,0);
+		
+		var radiusParaLume = 8;
+		
+		var ParaLumeGeometry = new THREE.SphereGeometry(radiusParaLume, 50, 50,0,Math.PI*2, Math.PI/2, Math.PI/2);
+        var ParaLumeMaterial = new THREE.MeshLambertMaterial({color: 0xD2B48C, side: THREE.DoubleSide});
+        var ParaLume = new THREE.Mesh(ParaLumeGeometry, ParaLumeMaterial);
+		ParaLume.castShadow = true;
+		ParaLume.position.set(0,radiusParaLume + 1,0);
+		sphereParaLume.add(ParaLume);
+		sphereParaLume.add(pointLight);
+		Lampadina.position.set(0,3.3,0);
+		sphereParaLume.add(Lampadina);
+		
+		
+		var target = new THREE.Object3D();
+		target.position.set(0,15,0);
+		sphereParaLume.add(target);
+		
+		
+		
+		var spotLight = new THREE.SpotLight( 0xFFFFFF );
+		spotLight.position.set(0,13,0);
+		spotLight.intensity = 0;
+		spotLight.castShadow = true;
+		spotLight.shadowCameraNear = 1;
+		spotLight.shadowCameraFear = 1000;
+		spotLight.shadowDarkness = 0.5;
+		spotLight.target = target;
+		sphereParaLume.add(spotLight);
+		joint2.hook.add(sphereParaLume)
+		
+		
+		
+
+        // add the output of the renderer to the html element
+        $('body').append(renderer.domElement);
+
+        var controls = new function () {
+          this.alpha_1 = 0.0 ;
+          this.beta_1 = 0.0;
+          this.alpha_2 = 0.0;
+          this.beta_2 = 0.8;
+		  this.sferaFinale = 1.0;
+		  this.interruttore = false;
+        };
+
+        var gui = new dat.GUI();
+        gui.add(controls, 'alpha_1', 0.0, 2*Math.PI);
+        gui.add(controls, 'beta_1', 0.0, Math.PI/2);
+        gui.add(controls, 'alpha_2', 0.0, 2*Math.PI);
+        gui.add(controls, 'beta_2', 0.0, Math.PI/2);
+		gui.add(controls, 'sferaFinale', - Math.PI/2, Math.PI/2);
+		gui.add(controls, 'interruttore').onChange(function (value) {
+			spotLight.intensity = 5;
+			pointLight.intensity = 10;
+			Lampadina.material = new THREE.MeshLambertMaterial({color: 0xFFFFFF, transparent: true, opacity:1, side: THREE.BackSide});
+			cubo.castShadow = true;
+			torus.castShadow = true;
+			renderer.shadowMapAutoUpdate = true;
+			if(!value){
+				spotLight.intensity = 0;
+				pointLight.intensity = 0;
+				Lampadina.material = new THREE.MeshLambertMaterial({color: 0xffffff, transparent: true, opacity: 0.3, side: THREE.FrontSide});
+				cubo.castShadow = false;
+				torus.castShadow = false;
+				renderer.shadowMapAutoUpdate = false;
+				renderer.clearTarget(spotLight.shadowMap);
+				}
+		});
+
+        function render() {
+          stats.update();
+          trackballControls.update();
+    
+		  joint1.rotation.y = controls.alpha_1; 
+		  joint1.sphere.rotation.x = controls.beta_1; 
+		  joint2.rotation.y = controls.alpha_2; 
+		  joint2.sphere.rotation.x = controls.beta_2; 
+		  sphereParaLume.rotation.x = controls.sferaFinale;
+          // render using requestAnimationFrame
+          requestAnimationFrame(render);
+          renderer.render(scene, camera);
+        }
+
+        function initStats() {
+          var stats = new Stats();
+          stats.setMode(0); // 0: fps, 1: ms
+          $('body').append(stats.domElement);
+          return stats;
+        }
+
+        render();
+      });
+    </script>
+ </body>
+</html>
