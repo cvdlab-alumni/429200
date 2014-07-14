@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html>
+ <head> 
+  <title>Appartamento</title> 
+  <style>
+    body{
+      margin: 0;
+      overflow: hidden;
+    }
+
+    #stats {  /* Align stats top-left */
+      position: absolute;
+      left: 0px;
+      top: 0px;
+    }
+  </style> 
+  </head>
+  <body>
+	<video id="video" src="assets/movies/Big_Buck_Bunny_small.ogv" controls="false" autoplay="false"></video>
+  <!-- JavaScript libraries -->
+  <script src="http://cdnjs.cloudflare.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script> 
+  <script src="http://cdnjs.cloudflare.com/ajax/libs/three.js/r67/three.min.js"></script>
+  <script src="http://cdnjs.cloudflare.com/ajax/libs/stats.js/r11/Stats.min.js"></script>
+  <script src="http://cdnjs.cloudflare.com/ajax/libs/dat-gui/0.5/dat.gui.min.js"></script>
+  <script src="assets/libs/TrackballControls.js"></script>
+  <script src="assets/libs/THREEx.KeyboardState.js"></script>
+  <script src="assets/libs/tween.min.js"></script>
+  <script src="assets/libs/keyframe.js"></script>
+  <script src="assets/libs/OBJLoader.js"></script>
+  <script src="assets/libs/creaLuci.js"></script>
+  <script src="assets/libs/creaShapeMuri.js"></script>
+  <script src="assets/libs/creaPorteFinestre.js"></script>
+  <script src="assets/libs/caricaOggetti.js"></script>
+  <script src="assets/libs/VideoTV.js"></script>
+  <!-- Javascript code that runs our Three.js examples --> 
+  <script>
+  
+  
+	var scene, camera, fpsCamera, renderer, controls, stats, trackballControls, renderCamera;
+	var texture;
+	var clock = new THREE.Clock();
+	var keyboard = new THREEx.KeyboardState();
+	
+	var targetGeom = new THREE.BoxGeometry(1,1,1);
+	var targetMat = new THREE.MeshPhongMaterial({transparent: true, opacity: 0});
+	var target = new THREE.Mesh(targetGeom,targetMat);
+	target.position.set(30,0,4);
+	
+    // once everything is loaded, we run our Three.js stuff.
+    init();
+	animate();
+
+	function init(){
+       stats = initStats();
+
+      // create a scene, that will hold all our elements such as objects, cameras and lights.
+       scene = new THREE.Scene();
+
+      // create a camera, which defines where we're looking at.
+       camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+	   camera.up = new THREE.Vector3(0,0,1);
+	  
+	   fpsCamera = new THREE.PerspectiveCamera(90, window.innerWidth / window.innerHeight, 0.1, 1000);
+	   //fpsCamera.position.set(0,35,3);
+	   fpsCamera.up = new THREE.Vector3(0,0,1);
+
+
+      // create trackball controls
+       trackballControls = new THREE.TrackballControls(camera);
+
+      // create a render and set the size
+      renderer = new THREE.WebGLRenderer();
+      renderer.setClearColor(new THREE.Color(0xeeeeee, 1.0));
+      renderer.setSize(window.innerWidth, window.innerHeight);
+
+      // position and point the camera to the center of the scene
+      camera.position.set(-30,40,50);
+      camera.lookAt(new THREE.Vector3(0, 0, 0));
+	  
+	  scene.add(target);
+      // add the output of the renderer to the html element
+      $('body').append(renderer.domElement);
+
+	var spotLight = new THREE.SpotLight(0xffffff);
+    spotLight.position.set(0, -15, 0);
+    scene.add(spotLight);
+	
+	var muri = creaShapeMuri();
+	scene.add(muri);
+	
+	var porteFinestre = creaPorteFinestre();
+	scene.add(porteFinestre);
+	
+	
+	var luci = creaLuci();
+	
+	scene.add(luci);
+	
+	var quadro = createBump();
+	function createBump(){
+
+	var bump = new THREE.Object3D();
+
+	var cornice = createMeshBump(new THREE.BoxGeometry(15, 15, 2), "immagineBona.jpg", "immagineChiaroScuro.jpg");
+	cornice.position.set(19,8,1.4);
+	bump.add(cornice);
+
+		function createMeshBump(geom, imageFile, bump) {
+			var texture = THREE.ImageUtils.loadTexture("assets/textures/general/" + imageFile);
+			geom.computeVertexNormals();
+			var mat = new THREE.MeshPhongMaterial();
+			mat.map = texture;
+
+			if (bump) {
+				var bump = THREE.ImageUtils.loadTexture("assets/textures/general/"+ imageFile);
+				mat.bumpMap = bump;
+				mat.bumpScale = 0.2;
+			}
+
+			var mesh = new THREE.Mesh(geom, mat);
+			mesh.scale.set(0.3,0.3,0.3);
+			
+			var value = true;
+			mesh.interact = function(){
+				if(value){
+					initAnimator();
+					animator.start();
+					value = false;					
+				}
+				else{
+					reset();
+					value = true;
+				}
+		}
+			return mesh;
+		}
+	bump.rotation.y = Math.PI / 2;
+	bump.rotation.z = Math.PI / 2;
+	
+	return bump;
+	}
+	scene.add(quadro);
+	
+	var oggetti = caricaOggetti();
+	scene.add(oggetti);
+
+	var videoTV = creaVideo();
+	 scene.add(videoTV);
+	
+    // call the render function
+    var step = 0;
+
+    // setup the control gui
+      
+    var mesh;
+
+    var loader = new THREE.OBJLoader();
+      loader.load('assets/models/CasaEsportazione.obj', function (obj) {
+
+        global_o = obj;
+
+        // var material = new THREE.MeshLambertMaterial({color: 0xaaaaaa});
+        // material.side = THREE.DoubleSide;
+        // obj.children[0].material = material;
+        // mesh = obj.children[0];
+
+        var multiMaterial = [
+          new THREE.MeshLambertMaterial({color: 0xaaaaaa, side: THREE.DoubleSide, shading: THREE.FlatShading}),
+          new THREE.MeshBasicMaterial({wireframe: true, overdraw: true, color: 0xffffff, side: THREE.DoubleSide})
+          ];
+
+        mesh = THREE.SceneUtils.createMultiMaterialObject(obj.children[0].geometry, multiMaterial);
+        
+        scene.add(mesh);
+      });
+
+
+	
+	$('body').append(renderer.domElement);
+		
+	
+	
+	// setup the control gui
+      controls = new function () {
+		this.camera = false;
+		this.interruttore = true;
+	  };
+
+      var gui = new dat.GUI();
+	  
+	  renderCamera = camera;
+	  
+	  gui.add(controls, 'camera').onChange(function (value) {
+        renderCamera = value ? fpsCamera : camera;
+      });
+	
+	
+	
+	var projector = new THREE.Projector();
+		document.addEventListener('mousedown', onDocumentMouseDown, false);
+	  function onDocumentMouseDown(event) {
+	  
+        event.preventDefault();
+        var vector = new THREE.Vector3(( event.clientX / window.innerWidth ) * 2 - 1, -( event.clientY / window.innerHeight ) * 2 + 1, 0.5);
+		
+		projector.unprojectVector(vector, renderCamera);
+		var raycaster = new THREE.Raycaster(renderCamera.position, vector.sub(renderCamera.position).normalize());
+
+        var intersects = raycaster.intersectObjects([porteFinestre.children[0].children[0], porteFinestre.children[1].children[0],
+														porteFinestre.children[2].children[0],porteFinestre.children[3].children[0],
+														porteFinestre.children[4].children[0],porteFinestre.children[5].children[0],
+														porteFinestre.children[6].children[0],porteFinestre.children[7].children[0],
+														porteFinestre.children[8].children[0],porteFinestre.children[9].children[0],porteFinestre.children[10].children[0],
+														porteFinestre.children[11].children[0],porteFinestre.children[12].children[0],porteFinestre.children[13].children[0],
+														luci.children[0].children[0],luci.children[1].children[0],luci.children[2].children[0],luci.children[3].children[0],
+														luci.children[4].children[0],luci.children[5].children[0],luci.children[6].children[0],videoTV.children[0],quadro.children[0]
+													]);
+		
+        if (intersects.length > 0) {
+		  intersects[ 0 ].object.interact();
+        }
+		
+      }
+				
+		function reset() {
+			quadro.position.set(0,0,0);
+		}
+		
+		
+		
+
+		var animator = null;
+		var duration = 2; // sec
+		var loopAnimation = true;
+
+		function initAnimator() {
+			animator = new KF.KeyFrameAnimator();
+			animator.init({ interps:[{ keys:[0,0.09,0.16,0.23,0.3,0.37,0.44,0.51,0.58,0.65,0.72,0.79,0.86,0.93,1],
+			values:[
+				  {	x:0,y:0,z:0},
+				  {	x:0,y:0,z:-0.2},
+				  {	x:0,y:0,z:-0.5},
+				  {	x:0,y:0,z:-0.8},
+				  {	x:0,y:0,z:-1.2},
+				  {	x:0,y:0,z:-1.5},
+				  {	x:0,y:0,z:-1.8},
+				  {	x:0,y:0,z:-2.1},
+				  {	x:0,y:0,z:-2.4},
+				  {	x:0,y:0,z:-2.7},
+				  {	x:0,y:0,z:-3.0},
+				  {	x:0,y:0,z:-3.3},
+				  {	x:0,y:0,z:-3.8},
+				  {	x:0,y:0,z:-4.0},
+				  {	x:0,y:0,z:-4.2},
+                ], target:quadro.position }, ], duration: duration * 1000, easing: TWEEN.Easing.Cubic.In });
+		}
+	 
+function initStats() {
+        var stats = new Stats();
+        stats.setMode(0); // 0: fps, 1: ms
+        $('body').append(stats.domElement);
+        return stats;
+      }
+};
+
+	  
+function animate() {
+	
+    requestAnimationFrame( animate );
+	render();		
+	update();
+	}
+ function render() {
+ 
+        KF.update();
+        trackballControls.update();
+
+		if (video.readyState === video.HAVE_ENOUGH_DATA) {
+              if (texture) texture.needsUpdate = true;
+          }
+        // render using requestAnimationFrame
+        //requestAnimationFrame(render);
+        renderer.render(scene, renderCamera);
+		
+		
+      }
+
+      
+function update()
+{
+	var delta = clock.getDelta(); // seconds.
+	var moveDistance = 10 *delta; 
+	var rotateAngle = Math.PI / 2 * delta;   // pi/2 radians (90 degrees) per second
+
+	if ( keyboard.pressed("S") )
+		target.translateY( -moveDistance );
+	if ( keyboard.pressed("W") )
+		target.translateY(  moveDistance );
+	if ( keyboard.pressed("Q") )
+		target.translateX( -moveDistance );
+	if ( keyboard.pressed("E") )
+		target.translateX(  moveDistance );	
+	
+
+	var rotation_matrix = new THREE.Matrix4().identity();
+	
+	if ( keyboard.pressed("A") )
+		target.rotateOnAxis( new THREE.Vector3(0,0,1), rotateAngle);
+	if ( keyboard.pressed("D") )
+		target.rotateOnAxis( new THREE.Vector3(0,0,1), -rotateAngle);
+	if ( keyboard.pressed("U") )
+		target.rotateOnAxis( new THREE.Vector3(1,0,0), rotateAngle);
+	if ( keyboard.pressed("I") )
+		target.rotateOnAxis( new THREE.Vector3(1,0,0), -rotateAngle);
+	
+	var relativeCameraOffset = new THREE.Vector3(0,-1,0);
+
+	var cameraOffset = relativeCameraOffset.applyMatrix4( target.matrixWorld );
+
+	fpsCamera.position.x = cameraOffset.x;
+	fpsCamera.position.y = cameraOffset.y;
+	fpsCamera.position.z = cameraOffset.z;
+	fpsCamera.lookAt( target.position );
+
+	//camera.updateMatrix();
+	//camera.updateProjectionMatrix();
+
+	stats.update();
+}	  
+	
+	
+  </script>  
+ </body>
+</html>
+
